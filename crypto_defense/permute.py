@@ -10,9 +10,11 @@ import random
 
 #print(tf.__version__)
 
-fashion_mnist = keras.datasets.fashion_mnist
+#fashion_mnist = keras.datasets.fashion_mnist
 
-(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+#(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+
+random.seed(6)
 
 def hmix_deprecated(image, index):
   for i in range(len(image)):
@@ -44,16 +46,20 @@ def vmix(image, index, index2):
     image[i][width-index2:width] = original[i][0:index2]
 
 
-image = np.copy(train_images[0])
-width = len(image[0])
-height = len(image)
-for i in range(30):
-  hmix(image, random.randint(0,width), random.randint(0,height))
-  vmix(image, random.randint(0,width), random.randint(0,height))
+def encrypt(image):
+  #encrypted_image = np.copy(image)
+  width = len(image[0])
+  height = len(image)
+  for i in range(max(width, height)):
+    hmix(image, random.randint(0, width), random.randint(0, height))
+    vmix(image, random.randint(0, width), random.randint(0, height))
 
-plt.figure()
-plt.imshow(image)
-plt.colorbar()
-plt.grid(False)
-plt.show()
+  return image
+
+if __name__ == "__main__":
+  plt.figure()
+  plt.imshow(image)
+  plt.colorbar()
+  plt.grid(False)
+  plt.show()
 
