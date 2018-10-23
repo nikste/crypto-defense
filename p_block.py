@@ -23,26 +23,22 @@ def p(x: np.array, k: np.array)-> np.array:
     return x_scrambled
 
 def p_neighbors(x:np.array, k:np.array, patch_size:int=2) -> np.array:
-    k_flat = np.reshape(k, [-1])
 
-    # go through half the array with stepsize patchsize / 2
-    indices = [] * k_flat.shape[0]
-    for i in range(0, x.shape[0] // 2, patch_size // 2):
+    scrambled_img = x.copy()
+    w, h, _ = scrambled_img.shape
+    for w_ind in range(0, w, patch_size):
+        for h_ind in range(0, h, patch_size):
+            key_excerpt = k[w_ind: w_ind + patch_size, h_ind: h_ind + patch_size]
+            image_excerpt = scrambled_img[w_ind: w_ind + patch_size, h_ind: h_ind + patch_size]
 
-        half_patchsize = 0
-        first_cutout = k_flat[i: i + patch_size // 2]
-
-        second_cutout = k_flat[i + x.shape[0] // 2: i + patch_size // 2 + x.shape[0] // 2]
-
-        cutout = first_cutout + second_cutout
-        indices_base_0 = np.argsort(cutout)
-        indices[i: i + patch_size] = i + indices_base_0[0:patch_size // 2]
-        indices[i + x.shape[0]//2: i + x.shape[0]//2 + patch_size // 2] = \
-            x.shape[0] + i + indices_base_0[i + x.shape[0] // 2: i + x.shape[0] // 2 + patch_size // 2]
-    x_flat = np.reshape(x, [-1, x.shape[2]])
-    x_scrambled_flat = x_flat[indices]
-    x_scrambled = np.reshape(x_scrambled_flat, [x.shape[0], x.shape[1], x.shape[2]])
-    return x_scrambled
+            # randomize!
+            key_excerpt_flat = np.reshape(key_excerpt, [-1])
+            image_excerpt_flat = np.reshape(image_excerpt, [-1, scrambled_img.shape[-1]])
+            indices = np.argsort(key_excerpt_flat)
+            image_scrambled_flat = image_excerpt_flat[indices]
+            image_scrambled = np.reshape(image_scrambled_flat, [patch_size, patch_size, scrambled_img.shape[-1]])
+            scrambled_img[w_ind: w_ind + patch_size, h_ind: h_ind + patch_size, :] = image_scrambled
+    return scrambled_img
 
 def identity_key(x: np.array) -> np.array:
     k = np.array(range(x.shape[0] * x.shape[1]))
@@ -56,49 +52,6 @@ def random_key(x: np.array) -> np.array:
     h, w, _ = x.shape
     k = np.random.rand(h, w)
     return k
-
-def local_random_key(x: np.array, patch_size:int=2) -> np.array:
-    """
-    We only randomize local patches, not to destroy the local pixel are similar assumption
-    :param x:
-    :return:
-    """
-    h, w, _ = x.shape
-    # make sure that the patch_size * patch_size image patches stay where they are
-    # crude heuristic should be done smarter
-
-    key = np.zeros_like(x[:, :, 0], dtype=np.float32)
-    for w_ind in range(0, w, patch_size):
-        for h_ind in range(0, h, patch_size):
-            vals = np.random.rand(patch_size, patch_size)
-            for i in range(w_ind, w_ind + patch_size):
-                for j in range(h_ind, h_ind + patch_size):
-                    val_i = i - w_ind
-                    val_j = j - h_ind
-                    offset = (w_ind // patch_size * w + h_ind)
-                    # print(offset)
-                    key[i, j] = offset + vals[val_i, val_j]
-
-            # for i in range(patch_size):
-            #     for j in range(patch_size):
-            #         ww = w_ind + i
-            #         hh = h_ind + j
-            #         offset = w_ind // patch_size * w + h_ind
-            #         key[ww, hh] = offset + vals[i * patch_size + j]
-    return key
-
-    #w_offset = w // patch_size
-    # h_offset = 500 #w_offset * w_offset
-    # key = []
-    # for w_ind in range(0, w, patch_size):
-    #     w_ind_keys = []
-    #     for h_ind in range(0, h, patch_size):
-    #         w_ind_keys.extend(w * w_ind // patch_size + w_ind + np.random.rand(patch_size, patch_size))
-    #     key.append(w_ind_keys)
-    # key = np.reshape(key, [w, h])
-    return key
-
-
 
 if __name__ == "__main__":
     fname = "/home/hack/Downloads/guacamole.jpg"
