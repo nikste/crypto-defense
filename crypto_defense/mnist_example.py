@@ -28,12 +28,15 @@ from __future__ import print_function
 import argparse
 import sys
 import tempfile
+import time
 
 from tensorflow.examples.tutorials.mnist import input_data
 
 import tensorflow as tf
 
-import numpy
+import numpy as np
+
+from p_block import random_key, p_neighbors
 
 FLAGS = None
 
@@ -80,7 +83,6 @@ def deepnn(x):
   relu_3 = tf.nn.relu(h_conv3)
 
   flatten = tf.manip.reshape(relu_3, [-1, 28 * 28 * 128])
-  logits = tf.layers.dense(flatten, 10)
 
   # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image
   # is down to 7x7x64 feature maps -- maps this to 1024 features.
@@ -116,7 +118,16 @@ def bias_variable(shape):
   return tf.Variable(initial)
 
 
+def encrypt_images(batch: np.array, key:np.array, patch_size=2) -> np.array:
+  img, labels = batch
+  img_reshape = np.reshape(img, [img.shape[0], 28, 28, 1])
+  list_array = np.split(img_reshape, indices_or_sections=img.shape[0], axis=0)
+  img_reshape = np.array([p_neighbors(np.squeeze(x, axis=0), key, patch_size=patch_size) for x in list_array])
+  batch = (np.reshape(img_reshape, [50, 784]), labels)
+  return batch
+
 def main(_):
+  encrypt = FLAGS.encrypt
   # Import data
   mnist = input_data.read_data_sets(FLAGS.data_dir)
 
@@ -147,23 +158,35 @@ def main(_):
   train_writer = tf.summary.FileWriter(graph_location)
   train_writer.add_graph(tf.get_default_graph())
 
+  saver = tf.train.Saver()
+
+  if encrypt:
+    print("USING ENCRYPTION!")
+    key = random_key(np.zeros([28,28,3]))
+  t_start = time.time()
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(20000):
+    for i in range(1000):
       batch = mnist.train.next_batch(50)
+      if encrypt:
+        batch = encrypt_images(batch, key, encrypt)
       if i % 100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x: batch[0], y_: batch[1]})
-        print('step %d, training accuracy %g' % (i, train_accuracy))
+        print("step", i, " training accuracy", train_accuracy, "took", time.time() - t_start)
+        t_start = time.time()
+        saver.save(sess=sess, save_path=f"{graph_location}/my-model.ckpt", global_step=i)
       train_step.run(feed_dict={x: batch[0], y_: batch[1]})
 
     # compute in batches to avoid OOM on GPUs
     accuracy_l = []
     for _ in range(20):
       batch = mnist.test.next_batch(500, shuffle=False)
+      if encrypt:
+        batch = encrypt_images(batch, key, patch_size=encrypt)
       accuracy_l.append(accuracy.eval(feed_dict={x: batch[0],
                                                  y_: batch[1]}))
-    print('test accuracy %g' % numpy.mean(accuracy_l))
+    print('test accuracy %g' % np.mean(accuracy_l))
 
 
 if __name__ == '__main__':
@@ -171,6 +194,10 @@ if __name__ == '__main__':
   parser.add_argument('--data_dir', type=str,
                       default='/tmp/tensorflow/mnist/input_data',
                       help='Directory for storing input data')
+  parser.add_argument('--encrypt', type=int,
+                      default=2,
+                      help='use encryption for training and inference, specify an integer value for patchsize in pixel,'
+                           'set to 0 to disable')
   FLAGS, unparsed = parser.parse_known_args()
   tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
 

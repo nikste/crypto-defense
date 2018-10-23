@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # key = inverse_key(img)
     # key = local_random_key(img, patch_size=2)
 
-    scrambled_img = p_neighbors(img, key, patch_size=2)
+    scrambled_img = p_neighbors(img, key, patch_size=100)
     Image.fromarray(img).show()
     Image.fromarray(scrambled_img).show()
 
