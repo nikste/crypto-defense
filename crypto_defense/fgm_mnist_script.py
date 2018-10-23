@@ -30,7 +30,7 @@ with tf.Session() as sess:
     saver.restore(sess, checkpoint_path)
     softmax, orig_image = sess.run((softmax, x), feed_dict={x: example_image})
 
-adv_x = fgm(x, logits)
+adv_x = fgm(x, logits, eps=0.000001)
 attacked_logits, _ = deepnn(x)
 attacked_softmax = tf.nn.softmax(attacked_logits)
 

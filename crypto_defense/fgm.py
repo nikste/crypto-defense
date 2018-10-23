@@ -5,7 +5,7 @@ import numpy as np
 def fgm(x,
         logits,
         y=None,
-        eps=0.3,
+        eps=0.000001,
         ord=np.inf,
         clip_min=None,
         clip_max=None,
