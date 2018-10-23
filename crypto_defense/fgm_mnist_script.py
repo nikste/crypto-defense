@@ -1,12 +1,16 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
-from crypto_defense.mnist_example import deepnn
+from crypto_defense.mnist_example import deepnn, encrypt_images
 from crypto_defense.fgm import fgm
 from matplotlib import pyplot as plt
 
+patch_size = 0
+if patch_size != 0:
+    checkpoint_path = f'/home/hack/Hackathon/checkpoints/niko_{patch_size}_encrypt/my-model.ckpt-900'
+else:
+    checkpoint_path = f'/home/hack/Hackathon/checkpoints/my-model.ckpt-900'
 
-checkpoint_path = '/home/hack/Hackathon/checkpoints/my-model.ckpt-900'
 mnist = input_data.read_data_sets('/tmp/tensorflow/mnist/input_data')
 
 batch = mnist.test.next_batch(100, shuffle=False)
@@ -19,6 +23,8 @@ example_target = targets[3]
 x = tf.placeholder(tf.float32, [784])
 y_ = tf.placeholder(tf.int64, [None])
 
+if patch_size != 0:
+    example_image = encrypt_images(example_image, key, patch_size=patch_size)
 logits, _ = deepnn(x)
 
 softmax = tf.nn.softmax(logits)
