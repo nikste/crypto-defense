@@ -33,16 +33,22 @@ def p_neighbors(x:np.array, k:np.array, patch_size:int=2) -> np.array:
     w, h, _ = scrambled_img.shape
     for w_ind in range(0, w, patch_size):
         for h_ind in range(0, h, patch_size):
-            key_excerpt = k[w_ind: w_ind + patch_size, h_ind: h_ind + patch_size]
-            image_excerpt = scrambled_img[w_ind: w_ind + patch_size, h_ind: h_ind + patch_size]
+            patch_size_local_w = patch_size
+            patch_size_local_h = patch_size
+            if w_ind + patch_size_local_w > w:
+                patch_size_local_w = w_ind + patch_size_local_w - w
+            if h_ind + patch_size_local_h > h:
+                patch_size_local_h = h_ind + patch_size_local_h - h
+            key_excerpt = k[w_ind: w_ind + patch_size_local_w, h_ind: h_ind + patch_size_local_h]
+            image_excerpt = scrambled_img[w_ind: w_ind + patch_size_local_w, h_ind: h_ind + patch_size_local_h]
 
             # randomize!
             key_excerpt_flat = np.reshape(key_excerpt, [-1])
             image_excerpt_flat = np.reshape(image_excerpt, [-1, scrambled_img.shape[-1]])
             indices = np.argsort(key_excerpt_flat)
             image_scrambled_flat = image_excerpt_flat[indices]
-            image_scrambled = np.reshape(image_scrambled_flat, [patch_size, patch_size, scrambled_img.shape[-1]])
-            scrambled_img[w_ind: w_ind + patch_size, h_ind: h_ind + patch_size, :] = image_scrambled
+            image_scrambled = np.reshape(image_scrambled_flat, [patch_size_local_w, patch_size_local_h, scrambled_img.shape[-1]])
+            scrambled_img[w_ind: w_ind + patch_size_local_w, h_ind: h_ind + patch_size_local_h, :] = image_scrambled
     return scrambled_img
 
 
@@ -71,7 +77,7 @@ if __name__ == "__main__":
     # key = inverse_key(img)
     # key = local_random_key(img, patch_size=2)
 
-    scrambled_img = p_neighbors(img, key, patch_size=100)
+    scrambled_img = p_neighbors(img, key, patch_size=10)
     Image.fromarray(img).show()
     Image.fromarray(scrambled_img).show()
 
