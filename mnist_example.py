@@ -80,7 +80,6 @@ def deepnn(x):
   relu_3 = tf.nn.relu(h_conv3)
 
   flatten = tf.manip.reshape(relu_3, [-1, 28 * 28 * 128])
-  logits = tf.layers.dense(flatten, 10)
 
   # Fully connected layer 1 -- after 2 round of downsampling, our 28x28 image
   # is down to 7x7x64 feature maps -- maps this to 1024 features.
@@ -147,14 +146,17 @@ def main(_):
   train_writer = tf.summary.FileWriter(graph_location)
   train_writer.add_graph(tf.get_default_graph())
 
+  saver = tf.train.Saver()
+
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
-    for i in range(20000):
+    for i in range(1000):
       batch = mnist.train.next_batch(50)
       if i % 100 == 0:
         train_accuracy = accuracy.eval(feed_dict={
             x: batch[0], y_: batch[1]})
         print('step %d, training accuracy %g' % (i, train_accuracy))
+        saver.save(sess=sess, save_path=f"{graph_location}/my-model.ckpt", global_step=i)
       train_step.run(feed_dict={x: batch[0], y_: batch[1]})
 
     # compute in batches to avoid OOM on GPUs
