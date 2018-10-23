@@ -36,6 +36,7 @@ import tensorflow as tf
 
 import numpy as np
 
+from permute import encrypt
 from p_block import random_key, p_neighbors
 
 FLAGS = None
@@ -122,7 +123,8 @@ def encrypt_images(batch: np.array, key:np.array, patch_size=2) -> np.array:
   img, labels = batch
   img_reshape = np.reshape(img, [img.shape[0], 28, 28, 1])
   list_array = np.split(img_reshape, indices_or_sections=img.shape[0], axis=0)
-  img_reshape = np.array([p_neighbors(np.squeeze(x, axis=0), key, patch_size=patch_size) for x in list_array])
+  #img_reshape = np.array([p_neighbors(np.squeeze(x, axis=0), key, patch_size=patch_size) for x in list_array])
+  img_reshape = np.array([encrypt(np.squeeze(x, axis=0)) for x in list_array])
   batch = (np.reshape(img_reshape, [50, 784]), labels)
   return batch
 
