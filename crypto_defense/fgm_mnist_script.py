@@ -5,6 +5,13 @@ from crypto_defense.mnist_example import deepnn
 from crypto_defense.fgm import fgm
 from matplotlib import pyplot as plt
 
+patch_size = 4
+if patch_size != 0:
+    checkpoint_path = f'/home/hack/Hackathon/checkpoints/niko_4_encrypt_w_key/my-model.ckpt-900'
+    key_path = f'/home/hack/Hackathon/checkpoints/niko_4_encrypt_w_key/key.npy'
+    key = np.load(key_path)
+else:
+    checkpoint_path = f'/home/hack/Hackathon/checkpoints/my-model.ckpt-900'
 
 checkpoint_path = '/home/hack/Hackathon/checkpoints/my-model.ckpt-900'
 mnist = input_data.read_data_sets('/tmp/tensorflow/mnist/input_data')
